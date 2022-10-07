@@ -1,0 +1,414 @@
+
+##########################################################################
+#########################    installation    #############################
+##########################################################################
+
+install.packages("tidyverse")
+install.packages("meta")
+install.packages("metafor")
+install.packages("devtools")
+devtools::install_github("MathiasHarrer/dmetar")
+
+
+##########################################################################
+######################    Data preparation    ############################
+##########################################################################
+
+library(tidyverse)
+setwd("~/data R")
+library(readxl)
+Data_AmyBouwman <- read_excel("Data_AmyBouwman.xlsx")
+View(Data_AmyBouwman)
+
+glimpse(Data_AmyBouwman)
+Data_AmyBouwman$year <- as.numeric(Data_AmyBouwman$year)
+Data_AmyBouwman$mean.age <- as.numeric(Data_AmyBouwman$mean.age)
+Data_AmyBouwman$sd.age <- as.numeric(Data_AmyBouwman$sd.age)
+Data_AmyBouwman$mean.age.intervention <- as.numeric(Data_AmyBouwman$mean.age.intervention)
+Data_AmyBouwman$sd.age.intervention <- as.numeric(Data_AmyBouwman$sd.age.intervention)
+Data_AmyBouwman$mean.age.control <- as.numeric(Data_AmyBouwman$mean.age.control)
+Data_AmyBouwman$sd.age.control <- as.numeric(Data_AmyBouwman$sd.age.control)
+Data_AmyBouwman$mean.intervention_pre_main <- as.numeric(Data_AmyBouwman$mean.intervention_pre_main)
+Data_AmyBouwman$sd.intervention_pre_main <- as.numeric(Data_AmyBouwman$sd.intervention_pre_main)
+Data_AmyBouwman$mean.intervention_post_main <- as.numeric(Data_AmyBouwman$mean.intervention_post_main)
+Data_AmyBouwman$sd.intervention_post_main <- as.numeric(Data_AmyBouwman$sd.intervention_post_main)
+Data_AmyBouwman$mean.control_pre_main <- as.numeric(Data_AmyBouwman$mean.control_pre_main)
+Data_AmyBouwman$sd.control_pre_main <- as.numeric(Data_AmyBouwman$sd.control_pre_main)
+Data_AmyBouwman$mean.control_post_main <- as.numeric(Data_AmyBouwman$mean.control_post_main)
+Data_AmyBouwman$sd.control_post_main <- as.numeric(Data_AmyBouwman$sd.control_post_main)
+Data_AmyBouwman$mean.intervention_pre_clinician <- as.numeric(Data_AmyBouwman$mean.intervention_pre_clinician)
+Data_AmyBouwman$sd.intervention_pre_clinician <- as.numeric(Data_AmyBouwman$sd.intervention_pre_clinician)
+Data_AmyBouwman$mean.intervention_post_clinician <- as.numeric(Data_AmyBouwman$mean.intervention_post_clinician)
+Data_AmyBouwman$sd.intervention_post_clinician <- as.numeric(Data_AmyBouwman$sd.intervention_post_clinician)
+Data_AmyBouwman$mean.control_pre_clinician <- as.numeric(Data_AmyBouwman$mean.control_pre_clinician)
+Data_AmyBouwman$sd.control_pre_clinician <- as.numeric(Data_AmyBouwman$sd.control_pre_clinician)
+Data_AmyBouwman$mean.control_post_clinician <- as.numeric(Data_AmyBouwman$mean.control_post_clinician)
+Data_AmyBouwman$sd.control_post_clinician <- as.numeric(Data_AmyBouwman$sd.control_post_clinician)
+Data_AmyBouwman$mean.intervention_pre_self <- as.numeric(Data_AmyBouwman$mean.intervention_pre_self)
+Data_AmyBouwman$sd.intervention_pre_self <- as.numeric(Data_AmyBouwman$sd.intervention_pre_self)
+Data_AmyBouwman$mean.intervention_post_self <- as.numeric(Data_AmyBouwman$mean.intervention_post_self)
+Data_AmyBouwman$sd.intervention_post_self <- as.numeric(Data_AmyBouwman$sd.intervention_post_self)
+Data_AmyBouwman$mean.control_pre_self <- as.numeric(Data_AmyBouwman$mean.control_pre_self)
+Data_AmyBouwman$sd.control_pre_self <- as.numeric(Data_AmyBouwman$sd.control_pre_self)
+Data_AmyBouwman$mean.control_post_self <- as.numeric(Data_AmyBouwman$mean.control_post_self)
+Data_AmyBouwman$sd.control_post_self <- as.numeric(Data_AmyBouwman$sd.control_post_self)
+Data_AmyBouwman$mean.intervention_shortestFU <- as.numeric(Data_AmyBouwman$mean.intervention_shortestFU)
+Data_AmyBouwman$sd.intervention_post_shortestFU <- as.numeric(Data_AmyBouwman$sd.intervention_post_shortestFU)
+Data_AmyBouwman$mean.control_post_shortestFU <- as.numeric(Data_AmyBouwman$mean.control_post_shortestFU)
+Data_AmyBouwman$sd.control_post_shortestFU <- as.numeric(Data_AmyBouwman$sd.control_post_shortestFU)
+glimpse(Data_AmyBouwman)
+
+
+##########################################################################
+######################## POOLED EFFECT SIZES main #######################
+##########################################################################
+
+# Make sure meta and dmetar are already loaded
+library(meta)
+library(dmetar)
+library(tidyverse) 
+
+# Load dataset from dmetar (or download and open manually)
+data(Data_AmyBouwman)
+
+# Use metcont to pool results.
+m.cont <- metacont(n.e = Data_AmyBouwman$n.control, 
+                   mean.e = Data_AmyBouwman$mean.control_post_main,
+                   sd.e = Data_AmyBouwman$sd.control_post_main,
+                   n.c = Data_AmyBouwman$n.intervention,
+                   mean.c = Data_AmyBouwman$mean.intervention_post_main, 
+                   sd.c = Data_AmyBouwman$sd.intervention_post_main, 
+                   studlab = First_author,
+                   data = Data_AmyBouwman,
+                   sm = "SMD",
+                   method.smd = "Hedges",
+                   fixed = FALSE,
+                   random = TRUE,
+                   method.tau = "REML",
+                   hakn = TRUE,
+                   title = "Partial remission interventions main")
+
+m.cont
+
+#####################################
+# Saving the RoB forest plot to PDF #
+#####################################
+
+pdf(file = "forestplotmainsorteffect.pdf", width = 12, height = 7)
+
+forest.meta(m.cont, 
+            sortvar = -TE,
+            text.common = "Hedges' g",
+            smlab = "Hedges' g (95% CI)",
+            rightlabs = c("Hedges' g", "95% CI", "Weight"),
+            prediction = TRUE, 
+            print.tau2 = FALSE,
+            leftcols = c("NieuweTitel", "RiskOfBias"),
+            leftlabs = c("Study", "Risk of Bias"))
+
+forest.meta(m.cont, layout = "JAMA")
+
+dev.off()
+
+##########################################################################
+######################## Follow up main effect ###########################
+##########################################################################
+
+# Use metcont to pool results.
+m.cont <- metacont(n.e = Data_AmyBouwman$n.control_shortestFU, 
+                   mean.e = Data_AmyBouwman$mean.control_post_shortestFU,
+                   sd.e = Data_AmyBouwman$sd.control_post_shortestFU,
+                   n.c = Data_AmyBouwman$n.intervention_shortestFU,
+                   mean.c = Data_AmyBouwman$mean.intervention_shortestFU, 
+                   sd.c = Data_AmyBouwman$sd.intervention_post_shortestFU, 
+                   studlab = First_author,
+                   data = Data_AmyBouwman,
+                   sm = "SMD",
+                   method.smd = "Hedges",
+                   fixed = FALSE,
+                   random = TRUE,
+                   method.tau = "REML",
+                   hakn = TRUE,
+                   title = "Partial remission interventions follow up")
+
+m.cont
+
+
+
+##########################################################################
+######################## POOLED EFFECT SIZES clinician ###################
+##########################################################################
+
+# Make sure meta and dmetar are already loaded
+library(meta)
+library(dmetar)
+library(tidyverse) 
+
+# Load dataset from dmetar (or download and open manually)
+data(Data_AmyBouwman)
+
+# Use metcont to pool results.
+m.cont <- metacont(n.e = Data_AmyBouwman$n.control, 
+                   mean.e = Data_AmyBouwman$mean.control_post_clinician,
+                   sd.e = Data_AmyBouwman$sd.control_post_clinician,
+                   n.c = Data_AmyBouwman$n.intervention,
+                   mean.c = Data_AmyBouwman$mean.intervention_post_clinician, 
+                   sd.c = Data_AmyBouwman$sd.intervention_post_clinician, 
+                   studlab = First_author,
+                   data = Data_AmyBouwman,
+                   sm = "SMD",
+                   method.smd = "Hedges",
+                   fixed = FALSE,
+                   random = TRUE,
+                   method.tau = "REML",
+                   hakn = TRUE,
+                   title = "Partial remission interventions clinician")
+
+m.cont
+
+#####################################
+# Saving the RoB forest plot to PDF #
+#####################################
+
+pdf(file = "forestplotclinician.pdf", width = 12, height = 7)
+
+forest.meta(m.cont, 
+            sortvar = Data_AmyBouwman$year,
+            prediction = TRUE, 
+            print.tau2 = FALSE,
+            leftcols = c("First_author", "n.total", "RiskOfBias"),
+            leftlabs = c("Author", "N", "Risk of Bias"))
+
+forest.meta(m.cont, layout = "JAMA")
+
+dev.off()
+
+
+##########################################################################
+######################## POOLED EFFECT SIZES self ########################
+##########################################################################
+
+# Make sure meta and dmetar are already loaded
+library(meta)
+library(dmetar)
+library(tidyverse) 
+
+# Load dataset from dmetar (or download and open manually)
+data(Data_AmyBouwman)
+
+# Use metcont to pool results.
+m.cont <- metacont(n.e = Data_AmyBouwman$n.control, 
+                   mean.e = Data_AmyBouwman$mean.control_post_self,
+                   sd.e = Data_AmyBouwman$sd.control_post_self,
+                   n.c = Data_AmyBouwman$n.intervention,
+                   mean.c = Data_AmyBouwman$mean.intervention_post_self, 
+                   sd.c = Data_AmyBouwman$sd.intervention_post_self, 
+                   studlab = First_author,
+                   data = Data_AmyBouwman,
+                   sm = "SMD",
+                   method.smd = "Hedges",
+                   fixed = FALSE,
+                   random = TRUE,
+                   method.tau = "REML",
+                   hakn = TRUE,
+                   title = "Partial remission interventions self")
+
+m.cont
+
+#####################################
+# Saving the RoB forest plot to PDF #
+#####################################
+
+pdf(file = "forestplotself.pdf", width = 12, height = 7)
+
+forest.meta(m.cont, 
+            sortvar = Data_AmyBouwman$year,
+            prediction = TRUE, 
+            print.tau2 = FALSE,
+            leftcols = c("First_author", "n.total", "RiskOfBias"),
+            leftlabs = c("Author", "N", "Risk of Bias"))
+
+forest.meta(m.cont, layout = "JAMA")
+
+dev.off()
+
+#############################################################################
+##################### sensitivity analysis ##################################
+#############################################################################
+
+find.outliers(m.cont)
+
+
+##############################################################################
+##################### Risk of relapse pooled effect sizes ####################
+##############################################################################
+
+m.bin <- metabin(event.e = intervention.relapse_yes_post, 
+                 n.e = n.intervention.relapse_post,
+                 event.c = control.relapse_yes_post,
+                 n.c = n.control.relapse_post,
+                 studlab = First_author,
+                 data = Data_AmyBouwman,
+                 sm = "OR",
+                 method = "MH",
+                 MH.exact = TRUE,
+                 fixed = FALSE,
+                 random = TRUE,
+                 method.tau = "PM",
+                 hakn = TRUE,
+                 title = "Risk of relapse MDD")
+summary(m.bin)
+
+##############################################################################
+##################### Risk of remission pooled effect sizes ####################
+##############################################################################
+
+m.bin <- metabin(event.e = intervention.remission_yes_post, 
+                 n.e = n.intervention.remission_post,
+                 event.c = control.remission_yes_post,
+                 n.c = n.control.remission_post,
+                 studlab = First_author,
+                 data = Data_AmyBouwman,
+                 sm = "OR",
+                 method = "MH",
+                 MH.exact = TRUE,
+                 fixed = FALSE,
+                 random = TRUE,
+                 method.tau = "PM",
+                 hakn = TRUE,
+                 title = "Risk of remission MDD")
+summary(m.bin)
+
+
+###############################################################################
+############################### Subgroup RoB ##################################
+###############################################################################
+
+
+m.cont <- metacont(n.e = Data_AmyBouwman$n.control, 
+                   mean.e = Data_AmyBouwman$mean.control_post_main,
+                   sd.e = Data_AmyBouwman$sd.control_post_main,
+                   n.c = Data_AmyBouwman$n.intervention,
+                   mean.c = Data_AmyBouwman$mean.intervention_post_main, 
+                   sd.c = Data_AmyBouwman$sd.intervention_post_main, 
+                   studlab = First_author,
+                   data = Data_AmyBouwman,
+                   subset = -c(7, 14),
+                   sm = "SMD",
+                   method.smd = "Hedges",
+                   fixed = FALSE,
+                   random = TRUE,
+                   method.tau = "REML",
+                   hakn = TRUE,
+                   title = "Partial remission interventions sub RoB")
+
+m.cont
+
+summary(m.cont)
+
+subgroup_RoB <- update.meta(m.cont, 
+                          subgroup = Data_AmyBouwman$RiskOfBias, 
+                           tau.common = FALSE)
+subgroup_RoB
+summary(subgroup_RoB)
+subgroup_RoB$pval.random.w
+subgroup_RoB$lower.I2.w
+subgroup_RoB$upper.I2.w
+
+###############################################################################
+########################## subgroup controlgroup ##############################
+###############################################################################
+
+m.cont <- metacont(n.e = Data_AmyBouwman$n.control, 
+                   mean.e = Data_AmyBouwman$mean.control_post_main,
+                   sd.e = Data_AmyBouwman$sd.control_post_main,
+                   n.c = Data_AmyBouwman$n.intervention,
+                   mean.c = Data_AmyBouwman$mean.intervention_post_main, 
+                   sd.c = Data_AmyBouwman$sd.intervention_post_main, 
+                   studlab = First_author,
+                   data = Data_AmyBouwman,
+                   subset = -c(8, 9, 10, 11, 12),
+                   sm = "SMD",
+                   method.smd = "Hedges",
+                   fixed = FALSE,
+                   random = TRUE,
+                   method.tau = "REML",
+                   hakn = TRUE,
+                   title = "Partial remission interventions sub control")
+
+m.cont
+
+summary(m.cont)
+
+subgroup_control <- update.meta(m.cont, 
+            subgroup = Data_AmyBouwman$ControlSubgroup, 
+            tau.common = FALSE)
+subgroup_control
+summary(subgroup_control)
+subgroup_control$pval.random.w
+subgroup_control$lower.I2.w
+subgroup_control$upper.I2.w
+
+###############################################################################
+############################ subgroup intervention ############################
+###############################################################################
+
+m.cont <- metacont(n.e = Data_AmyBouwman$n.control, 
+                   mean.e = Data_AmyBouwman$mean.control_post_main,
+                   sd.e = Data_AmyBouwman$sd.control_post_main,
+                   n.c = Data_AmyBouwman$n.intervention,
+                   mean.c = Data_AmyBouwman$mean.intervention_post_main, 
+                   sd.c = Data_AmyBouwman$sd.intervention_post_main, 
+                   studlab = First_author,
+                   data = Data_AmyBouwman,
+                   subset = -c(1, 6, 7, 8, 9, 10, 11, 12),
+                   sm = "SMD",
+                   method.smd = "Hedges",
+                   fixed = FALSE,
+                   random = TRUE,
+                   method.tau = "REML",
+                   hakn = TRUE,
+                   title = "Partial remission interventions sub intervention")
+
+m.cont
+
+summary(m.cont)
+
+subgroup_intervention <- update.meta(m.cont, 
+                                subgroup = Data_AmyBouwman$InterventionSubgroup, 
+                                tau.common = FALSE)
+subgroup_intervention
+summary(subgroup_intervention)
+subgroup_intervention$pval.random.w
+subgroup_intervention$lower.I2.w
+subgroup_intervention$upper.I2.w
+
+##############################################################################
+############################ Meta regression #################################
+##############################################################################
+
+#Year
+m.cont.reg <- metareg(m.cont, year)
+
+m.cont.reg
+
+
+#intervention length
+m.cont.reg <- metareg(m.cont, length.intervention.weeks)
+
+m.cont.reg
+
+
+##############################################################################
+############################## Publication Bias ##############################
+##############################################################################
+
+library(meta)
+
+funnel.meta(m.cont,
+            xlim = c(-0.3, 1.2),
+            studlab = TRUE)
+
+title("Funnel Plot (Partial remission depression)")
+
+
